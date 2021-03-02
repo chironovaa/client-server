@@ -26,15 +26,9 @@ public:
 	};
 	void run(){
 		fd_set rset; 
-		if (!createTCPSocket()){
-			 perror("socket failed"); 
-        	exit(EXIT_FAILURE);
-		}
+		createTCPSocket();
 		bindServerToTCP();
-		if (!createUDPSocket()){
-			 perror("socket failed"); 
-        	exit(EXIT_FAILURE);
-		}
+		createUDPSocket();
 		bindServerToUDP();
 		FD_ZERO(&rset); 
 		char msg[MAXLINE];
@@ -87,23 +81,29 @@ private:
 	int TCPsocketDescriptor, UDPsocketDescriptor;
 	struct sockaddr_in cliaddr, servaddr; 
 
-	bool createTCPSocket(){
+	void createTCPSocket(){
 		TCPsocketDescriptor = socket(AF_INET, SOCK_STREAM, 0); 
-		return TCPsocketDescriptor >= 0;//если <0 то socked failed
+		if (TCPsocketDescriptor < 0) {
+			perror("TCP socket failed");
+			exit(EXIT_FAILURE);
+		}
 	};
-	bool bindServerToTCP(){
-		bind(TCPsocketDescriptor, (struct sockaddr*)&servaddr, sizeof(servaddr)); 
+	void bindServerToTCP(){
+		if(bind(TCPsocketDescriptor, (struct sockaddr*)&servaddr, sizeof(servaddr) < 0)
+			perror("TCP binding error");
 		listen(TCPsocketDescriptor, SOMAXCONN); 
-		return true;
 	};
 	
-	bool createUDPSocket(){
+	void createUDPSocket(){
 		UDPsocketDescriptor = socket(AF_INET, SOCK_DGRAM, 0);
-		return UDPsocketDescriptor >= 0;//если 0 то socked failed
+		if (TCPsocketDescriptor < 0) {
+			perror("UDP socket failed");
+			exit(EXIT_FAILURE);
+		}
 	};
-	bool bindServerToUDP(){
-		bind(UDPsocketDescriptor, (struct sockaddr*)&servaddr, sizeof(servaddr)); 
-		return true;
+	void bindServerToUDP(){
+		if (bind(UDPsocketDescriptor, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0)
+			perror("UPD binding error");
 	};
 	
 	void chatTCP(){
@@ -112,13 +112,15 @@ private:
 		int connfd = accept(TCPsocketDescriptor, (struct sockaddr*)&cliaddr, &len); 
 		if (fork() == 0) { 
 			close(TCPsocketDescriptor); 
-
+			//get message from Client
 			bzero(buffer, sizeof(buffer)); 
 			printf("Message From TCP client: \n"); 
-			recv(connfd, buffer, sizeof(buffer), MSG_NOSIGNAL); 
+			if(recv(connfd, buffer, sizeof(buffer), MSG_NOSIGNAL) == -1)
+				perror("getting from TCP client failed");
 			puts(buffer); 
-
-			send(connfd, handle(buffer), sizeof(buffer), MSG_NOSIGNAL);
+			//send message to Client
+			if(send(connfd, handle(buffer), sizeof(buffer), MSG_NOSIGNAL) == -1)
+				perror("sending to TCP client failed");
 
 			close(connfd); 
 			exit(0); 
@@ -128,13 +130,17 @@ private:
 	void chatUDP(){
 		char buffer[MAXLINE];
 		socklen_t len = sizeof(cliaddr); 
+		//get message from Client
 		bzero(buffer, sizeof(buffer)); 
 		printf("\nMessage from UDP client: \n"); 
-		recvfrom(UDPsocketDescriptor, buffer, sizeof(buffer), 0, 
-							(struct sockaddr*)&cliaddr, &len); 
+		if(recvfrom(UDPsocketDescriptor, buffer, sizeof(buffer), 0, 
+							(struct sockaddr*)&cliaddr, &len) == -1)
+			perror("getting from UDP client failed");
 		puts(buffer); 
-		sendto(UDPsocketDescriptor, handle(buffer), sizeof(buffer), 0,
-					(struct sockaddr*)&cliaddr, sizeof(cliaddr)); 
+		//send message to Client
+		if(sendto(UDPsocketDescriptor, handle(buffer), sizeof(buffer), 0,
+					(struct sockaddr*)&cliaddr, sizeof(cliaddr)) == -1)
+			perror("sending to UDP client failed");
 	};
 };
 

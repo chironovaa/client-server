@@ -48,18 +48,19 @@ public:
 			std::getline(std::cin, msg);
 			if (msg == "exit")
 				break;
-
+			//send message to Server
 			if (send(socketDescriptor, msg.c_str(), sizeof(msg.c_str()), MSG_NOSIGNAL) == -1)
 				printf("sending failed");
 
-			char buffer[MAX];
+			char responce[MAX];
 			printf("Message from server: \n");
-			memset(buffer, 0, sizeof(buffer));
+			memset(responce, 0, sizeof(responce));
 
-			if(recv(socketDescriptor, buffer, sizeof(buffer), MSG_NOSIGNAL) == -1)
+			//get message from Server
+			if(recv(socketDescriptor, responce, sizeof(responce), MSG_NOSIGNAL) == -1)
 				printf("getting failed");
 
-			puts(buffer);
+			puts(responce);
 
 			close(socketDescriptor);
 		}
@@ -99,19 +100,19 @@ public:
 			std::getline(std::cin, msg);
 			if (msg == "exit")
 				break;
-
+			//send message to Server
 			if (sendto(socketDescriptor, msg.c_str(), strlen(msg.c_str()), 0,
 				(const struct sockaddr*)&servaddr, sizeof(servaddr)) == -1) {
 				printf("sending failed");
 			}
-
-			char buffer[MAX];
+		
+			char responce[MAX];
 			printf("Message from server: \n");
-
-			if(recvfrom(socketDescriptor, (char*)buffer, MAX, 0, (struct sockaddr*)&servaddr, &len) == -1)
+			//get message from Server
+			if(recvfrom(socketDescriptor, (char*)responce, MAX, 0, (struct sockaddr*)&servaddr, &len) == -1)
 				printf("getting failed");
 
-			puts(buffer);
+			puts(responce);
 
 			close(socketDescriptor);
 		}
