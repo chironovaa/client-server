@@ -55,10 +55,6 @@ public:
 			} 
 		} 
 	};
-private:
-	int TCPsocketDescriptor, UDPsocketDescriptor;
-	struct sockaddr_in cliaddr, servaddr; 
-
 	const char* handle(const char str[MAXLINE]) const {
 		std::stack<int> numbers;
 		int sum = 0;
@@ -87,6 +83,9 @@ private:
 			return newS.c_str();
 		}
 	};
+private:
+	int TCPsocketDescriptor, UDPsocketDescriptor;
+	struct sockaddr_in cliaddr, servaddr; 
 
 	bool createTCPSocket(){
 		TCPsocketDescriptor = socket(AF_INET, SOCK_STREAM, 0); 
